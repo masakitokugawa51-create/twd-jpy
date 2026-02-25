@@ -22,7 +22,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   
-  <link rel="preconnect" href="https://api.frankfurter.app">
+  <link rel="preconnect" href="https://open.er-api.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -410,8 +410,9 @@ footerText=document.getElementById('footerText');
 
 async function fetchRate(){
   try{
-    const r=await fetch('https://api.frankfurter.app/latest?from=TWD&to=JPY');
+    const r=await fetch('https://open.er-api.com/v6/latest/TWD');
     if(!r.ok)throw 0;const j=await r.json();
+    if(j.result!=='success')throw 0;
     if(rate)prevRate=rate;
     rate=j.rates.JPY;
     lastUpdated=new Date();
