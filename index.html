@@ -22,7 +22,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   
-  <link rel="preconnect" href="https://open.er-api.com">
+  <link rel="preconnect" href="https://api.exchangerate-api.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -409,21 +409,32 @@ rateValueEl=document.getElementById('rateValue'),changeBadge=document.getElement
 footerText=document.getElementById('footerText');
 
 async function fetchRate(){
-  try{
-    const r=await fetch('https://open.er-api.com/v6/latest/TWD');
-    if(!r.ok)throw 0;const j=await r.json();
-    if(j.result!=='success')throw 0;
-    if(rate)prevRate=rate;
-    rate=j.rates.JPY;
-    lastUpdated=new Date();
-    const c=localStorage.getItem('twd_jpy');
-    if(c){const d=JSON.parse(c);if(Date.now()-d.ts>3600000){change24h=Math.round((rate-d.rate)/d.rate*10000)/100;}}
-    localStorage.setItem('twd_jpy',JSON.stringify({rate,ts:Date.now()}));
-    updateUI();
-  }catch(e){
-    const c=localStorage.getItem('twd_jpy');
-    if(c){const d=JSON.parse(c);rate=d.rate;lastUpdated=new Date(d.ts);updateUI();}
+  // Try multiple APIs for TWD/JPY
+  var apis=[
+    {url:'https://api.exchangerate-api.com/v4/latest/TWD',parse:function(j){return j.rates.JPY;}},
+    {url:'https://open.er-api.com/v6/latest/TWD',parse:function(j){return j.rates.JPY;}}
+  ];
+  for(var i=0;i<apis.length;i++){
+    try{
+      var r=await fetch(apis[i].url);
+      if(!r.ok)continue;
+      var j=await r.json();
+      var newRate=apis[i].parse(j);
+      if(!newRate||isNaN(newRate))continue;
+      if(rate)prevRate=rate;
+      rate=newRate;
+      lastUpdated=new Date();
+      var c=localStorage.getItem('twd_jpy');
+      if(c){var d=JSON.parse(c);if(Date.now()-d.ts>3600000){change24h=Math.round((rate-d.rate)/d.rate*10000)/100;}}
+      localStorage.setItem('twd_jpy',JSON.stringify({rate,ts:Date.now()}));
+      updateUI();
+      return;
+    }catch(e){continue;}
   }
+  // Fallback: use cached or hardcoded
+  var c=localStorage.getItem('twd_jpy');
+  if(c){var d=JSON.parse(c);rate=d.rate;lastUpdated=new Date(d.ts);updateUI();}
+  else{rate=4.65;lastUpdated=new Date();updateUI();}
 }
 function updateUI(){
   const dir=rate>prevRate?'up':rate<prevRate?'down':'';
