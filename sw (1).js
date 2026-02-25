@@ -16,7 +16,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('frankfurter.app') || e.request.url.includes('adsbygoogle')) {
+  if (e.request.url.includes('er-api') || e.request.url.includes('exchangerate') || e.request.url.includes('frankfurter') || e.request.url.includes('adsbygoogle')) {
     return;
   }
   e.respondWith(
